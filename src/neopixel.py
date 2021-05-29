@@ -23,7 +23,7 @@ class NeoPixel:
     def __init__(self, pin, num_pixels):
         self.brightness = 0.01
         # Create the StateMachine with the ws2812 program, outputting on Pin(16).
-        self.__sm = rp2.StateMachine(0, self.ws2812, freq=9_000_000, sideset_base=Pin(pin))
+        self.__sm = rp2.StateMachine(0, self.ws2812, freq=8_000_000, sideset_base=Pin(pin))
         # Start the StateMachine, it will wait for data on its FIFO.
         self.__sm.active(1)
         # Display a pattern on the LEDs via an array of LED RGB values.
