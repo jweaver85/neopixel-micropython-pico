@@ -1,4 +1,6 @@
 import neopixel
+from machine import Pin
+
 from options import Options
 from queue import queue
 from rainbowwalk import rainbowwalk
@@ -28,57 +30,58 @@ options = Options(
     False  # debug mode (for logging purposes
 )
 
-algos = [sparkle, black_light, rainbowwalk, split_rainbow_walk, edie_walk, split_edie_walk, america_walk,
-         split_america_walk,
-         color_walk, split_color_walk, sparkle, sparkle_shift]
+algos = [sparkle, black_light, rainbowwalk, edie_walk, america_walk, color_walk]
 algo_index = 0
 
 options.pixels.brightness = options.brightness
 options.pixels.auto_write = False
 
+algo_button = machine.Pin(12, machine.Pin.IN, machine.Pin.PULL_DOWN)
+algo_button_prev = False
 
-# algo_button = digitalio.DigitalInOut(board.GP13)
-# algo_button.switch_to_input(pull=digitalio.Pull.DOWN)
-# algo_button_prev = False
-
-# brightness_button = digitalio.DigitalInOut(board.GP12)
-# brightness_button.switch_to_input(pull=digitalio.Pull.DOWN)
-# brightness_button_prev = False
-
-# step_pot = analogio.AnalogIn(board.GP26)
-# brightness_pot = analogio.AnalogIn(board.GP27)
-
+brightness_button = machine.Pin(13, machine.Pin.IN, machine.Pin.PULL_DOWN)
+brightness_button_prev = False
 
 def updateAlgorithm():
-    #     global algo_button
-    #     global algo_button_prev
-    #     global algo_index
-    #     global algos
-    #
-    #     if algo_button.value and algo_button.value != algo_button_prev:
-    #         algo_button_prev = algo_button.value
-    #         new_algo_index = (algo_index + 1) % (len(algos) + 1)
-    #
-    #         if algo_index != new_algo_index:
-    #             options.buffer.clear()
-    #
-    #         algo_index = new_algo_index
-    #         options.algo = algos[algo_index] if algo_index < len(algos) else "off"
-    #
-    #         if options.debug: print("algo_button pressed! Current algo: " + str(options.algo))
-    #
-    #     if not algo_button.value:
-    #         algo_button_prev = algo_button.value
-    #
+    global algo_button
+    global algo_button_prev
+    global algo_index
+    global algos
+
+    if algo_button.value() and algo_button.value() != algo_button_prev:
+        algo_button_prev = algo_button.value()
+        new_algo_index = (algo_index + 1) % (len(algos) + 1)
+
+        if algo_index != new_algo_index:
+            options.buffer.clear()
+
+        algo_index = new_algo_index
+        options.algo = algos[algo_index] if algo_index < len(algos) else "off"
+
+        if options.debug: print("algo_button pressed! Current algo: " + str(options.algo))
+
+    if not algo_button.value():
+        algo_button_prev = algo_button.value()
+
     return options.algo
 
 
 def updateBrightness():
-    #     global brightness_pot
-    #     global options
-    #
-    #     calculated = float(brightness_pot.value / 65530)  # - 0.01
-    #     options.brightness = calculated if abs(calculated - options.brightness) > 0.05 else options.brightness
+    global options
+    global brightness_button
+    global brightness_button_prev
+
+    if brightness_button.value() and brightness_button.value() != brightness_button_prev:
+        brightness_button_prev = brightness_button.value()
+
+        options.brightness = float(options.brightness + 0.1) if float(options.brightness + 0.1) < 1.01 else 0
+        return options.brightness
+
+        if options.debug: print("brightness_button pressed! Current brightness: " + str(options.brightness))
+
+    if not brightness_button.value():
+        brightness_button_prev = brightness_button.value()
+
     return options.brightness
 
 
@@ -90,16 +93,15 @@ def updateStep():
     #     difference = abs(options.step - calculated)
     #     print(str(calculated))
     #     if difference >= 2:
-    #         options.buffer.clear()
+    #         options.buffer.clear()s
     #         return calculated if calculated > 0 else 1
     #     else:
     return options.step
 
 
-def do_work():  # setup == "do_work"
+def do_work(options):  # setup == "do_work"
     global algos
     global algo_index
-    global options
 
     options.algo = updateAlgorithm()
     options.brightness = updateBrightness()
@@ -112,9 +114,8 @@ def do_work():  # setup == "do_work"
         options.pixels.brightness = options.brightness
         algos[algo_index](options)
 
-    if (options.debug): print("numpixels" + str(options.num_pixels))
+    if options.debug: print("numpixels" + str(options.num_pixels))
 
 
 while True:
-    do_work()
-
+    do_work(options)
