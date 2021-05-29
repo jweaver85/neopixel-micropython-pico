@@ -1,3 +1,4 @@
+import time
 import neopixel
 from machine import Pin
 
@@ -20,12 +21,12 @@ from black_light import black_light
 num_pixels = 60
 options = Options(
     num_pixels,  # pixels in this LED strip
-    2,  # step size for walks
+    17,  # step size for walks
     0.1,  # brightness
-    0.01,  # sleepytime (unused?)
+    0.05,  # sleepytime (unused?)
     neopixel.NeoPixel(0, num_pixels),  # neopixel object
     queue([], num_pixels),  # colors to be rendered (buffer 1)
-    queue([], None),  # buffer (buffer 2) to consumed by buffer 1
+    queue([], None),  # buffer (buffer 2) to consumed by buffeqr 1
     'rainbowwalk',  # initial color effect to start TODO: move this to onboard storage
     False  # debug mode (for logging purposes
 )
@@ -36,10 +37,10 @@ algo_index = 0
 options.pixels.brightness = options.brightness
 options.pixels.auto_write = False
 
-algo_button = machine.Pin(12, machine.Pin.IN, machine.Pin.PULL_DOWN)
+algo_button = Pin(12, Pin.IN, Pin.PULL_DOWN)
 algo_button_prev = False
 
-brightness_button = machine.Pin(13, machine.Pin.IN, machine.Pin.PULL_DOWN)
+brightness_button = Pin(13, Pin.IN, Pin.PULL_DOWN)
 brightness_button_prev = False
 
 def updateAlgorithm():
@@ -73,11 +74,9 @@ def updateBrightness():
 
     if brightness_button.value() and brightness_button.value() != brightness_button_prev:
         brightness_button_prev = brightness_button.value()
-
         options.brightness = float(options.brightness + 0.1) if float(options.brightness + 0.1) < 1.01 else 0
-        return options.brightness
-
         if options.debug: print("brightness_button pressed! Current brightness: " + str(options.brightness))
+        return options.brightness
 
     if not brightness_button.value():
         brightness_button_prev = brightness_button.value()
@@ -102,7 +101,6 @@ def updateStep():
 def do_work(options):  # setup == "do_work"
     global algos
     global algo_index
-
     options.algo = updateAlgorithm()
     options.brightness = updateBrightness()
     options.step = updateStep()
@@ -116,6 +114,7 @@ def do_work(options):  # setup == "do_work"
 
     if options.debug: print("numpixels" + str(options.num_pixels))
 
-
 while True:
     do_work(options)
+    time.sleep(options.sleepytime)
+
